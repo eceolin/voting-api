@@ -57,11 +57,11 @@ public class VotoService {
 			throw new AssociadoJaVotouException();
 		}
 
-		Voto voto = new Voto();
-		voto.setCodigoAssociado(votoDTO.getCodigoAssociado());
-		voto.setPauta(pauta);
-		voto.setVoto(votoDTO.getVoto());
-
+		Voto voto = Voto.builder()
+				.codigoAssociado(votoDTO.getCodigoAssociado())
+				.pauta(pauta)
+				.voto(votoDTO.getVoto())
+				.build();
 		return this.votoRepository.save(voto);
 	}
 

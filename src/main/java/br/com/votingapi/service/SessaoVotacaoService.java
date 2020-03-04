@@ -109,13 +109,12 @@ public class SessaoVotacaoService {
 		// Maioria simples para aprovar.
 		boolean aprovado = pros > contra;
 
-		ResumoVotacao resumoVotacao = new ResumoVotacao();
-		resumoVotacao.setPros(pros);
-		resumoVotacao.setContra(contra);
-		resumoVotacao.setAssunto(sessaoVotacao.getPauta().getAssunto());
-		resumoVotacao.setAprovado(aprovado);
-
-		return resumoVotacao;
+		return ResumoVotacao.builder()
+				.pros(pros)
+				.contra(contra)
+				.assunto(sessaoVotacao.getPauta().getAssunto())
+				.aprovado(aprovado)
+				.build();
 	}
 
 	public SessaoVotacao buscarSessaoVotacaoPeloCodigoPauta(Long codigoPauta) {

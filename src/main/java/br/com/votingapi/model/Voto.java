@@ -12,6 +12,7 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -25,6 +26,7 @@ import lombok.EqualsAndHashCode;
 @Table(name = "voto")
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Builder
 public class Voto implements Serializable {
 
 	private static final long serialVersionUID = 1L;
