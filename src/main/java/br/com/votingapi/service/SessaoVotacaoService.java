@@ -2,6 +2,7 @@ package br.com.votingapi.service;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.EmptyResultDataAccessException;
@@ -9,11 +10,20 @@ import org.springframework.stereotype.Service;
 
 import br.com.votingapi.model.Pauta;
 import br.com.votingapi.model.SessaoVotacao;
+import br.com.votingapi.model.Voto;
 import br.com.votingapi.repository.SessaoVotacaoRepository;
+import br.com.votingapi.repository.projection.ResumoVotacao;
 import br.com.votingapi.service.exception.SessaoVotacaoDataInvalidaException;
 import br.com.votingapi.service.exception.SessaoVotacaoJaCadastradaException;
+import br.com.votingapi.service.exception.SessaoVotacaoNaoEncerradaException;
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * Service usado para regras relacionadas as sessões de votação.
+ *
+ * @author rafael.rutsatz
+ *
+ */
 @Slf4j
 @Service
 public class SessaoVotacaoService {
@@ -50,11 +60,14 @@ public class SessaoVotacaoService {
 		LocalDateTime dataInicio = sessaoVotacao.getDataInicio();
 		if (dataInicio == null) {
 			dataInicio = LocalDateTime.now();
+			sessaoVotacao.setDataInicio(dataInicio);
+
 		}
 
 		LocalDateTime dataFim = sessaoVotacao.getDataFim();
 		if (dataFim == null) {
 			dataFim = dataInicio.plus(1, ChronoUnit.MINUTES);
+			sessaoVotacao.setDataFim(dataFim);
 		}
 
 		// Data inválida. Data inicial maior que a final.
@@ -65,8 +78,56 @@ public class SessaoVotacaoService {
 		return this.sessaoVotacaoRepository.save(sessaoVotacao);
 	}
 
+	/**
+	 * Apura o resultado da votação.
+	 *
+	 * @param codigoSessao Código da sessão que se deseja apurar os votos.
+	 * @return Resumo com o resultado.
+	 */
+	public ResumoVotacao resultado(Long codigoSessao) {
+
+		LocalDateTime now = LocalDateTime.now();
+
+		SessaoVotacao sessaoVotacao = buscarSessaoVotacaoPeloCodigo(codigoSessao);
+
+		if (now.isBefore(sessaoVotacao.getDataFim())) {
+			throw new SessaoVotacaoNaoEncerradaException();
+		}
+
+		int pros = 0;
+		int contra = 0;
+
+		List<Voto> votos = sessaoVotacao.getPauta().getVotos();
+		for (Voto voto : votos) {
+			if (voto.getVoto()) {
+				pros++;
+			} else {
+				contra++;
+			}
+		}
+
+		// Maioria simples para aprovar.
+		boolean aprovado = pros > contra;
+
+		ResumoVotacao resumoVotacao = new ResumoVotacao();
+		resumoVotacao.setPros(pros);
+		resumoVotacao.setContra(contra);
+		resumoVotacao.setAssunto(sessaoVotacao.getPauta().getAssunto());
+		resumoVotacao.setAprovado(aprovado);
+
+		return resumoVotacao;
+	}
+
 	public SessaoVotacao buscarSessaoVotacaoPeloCodigoPauta(Long codigoPauta) {
 		SessaoVotacao sessaoVotacaoSalva = this.sessaoVotacaoRepository.findByPautaCodigo(codigoPauta)
+				// Se não encontrou row, lança a exceção, para manter o tratamento e retornar o
+				// Http 404.
+				.orElseThrow(() -> new EmptyResultDataAccessException(1));
+		return sessaoVotacaoSalva;
+	}
+
+	public SessaoVotacao buscarSessaoVotacaoPeloCodigo(Long codigoSessao) {
+		SessaoVotacao sessaoVotacaoSalva = this.sessaoVotacaoRepository.findById(codigoSessao)
 				// Se não encontrou row, lança a exceção, para manter o tratamento e retornar o
 				// Http 404.
 				.orElseThrow(() -> new EmptyResultDataAccessException(1));

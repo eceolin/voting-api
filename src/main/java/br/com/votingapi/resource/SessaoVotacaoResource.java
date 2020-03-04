@@ -21,9 +21,11 @@ import org.springframework.web.bind.annotation.RestController;
 import br.com.votingapi.exceptionhandler.Erro;
 import br.com.votingapi.model.SessaoVotacao;
 import br.com.votingapi.repository.SessaoVotacaoRepository;
+import br.com.votingapi.repository.projection.ResumoVotacao;
 import br.com.votingapi.service.SessaoVotacaoService;
 import br.com.votingapi.service.exception.SessaoVotacaoDataInvalidaException;
 import br.com.votingapi.service.exception.SessaoVotacaoJaCadastradaException;
+import br.com.votingapi.service.exception.SessaoVotacaoNaoEncerradaException;
 
 /**
  * Controller responsável por tratar as requisições relacionadas as sessões de
@@ -80,6 +82,18 @@ public class SessaoVotacaoResource {
 				.orElse(ResponseEntity.notFound().build());
 	}
 
+	/**
+	 * Contibiliza os votos e retorna o resultado.
+	 *
+	 * @param lancamentoFilter
+	 * @param pageable
+	 * @return
+	 */
+	@GetMapping("/{codigo}/resultado")
+	public ResumoVotacao apurarVotos(@PathVariable Long codigo) {
+		return sessaoVotacaoService.resultado(codigo);
+	}
+
 	@ExceptionHandler({ SessaoVotacaoJaCadastradaException.class })
 	public ResponseEntity<Object> handleSessaoVotacaoJaCadastradaException(SessaoVotacaoJaCadastradaException ex) {
 		String mensagemUsuario = messageSource.getMessage("sessaoVotacao.ja-cadastrada", null,
@@ -92,6 +106,15 @@ public class SessaoVotacaoResource {
 	@ExceptionHandler({ SessaoVotacaoDataInvalidaException.class })
 	public ResponseEntity<Object> handleSessaoVotacaoDataInvalidaException(SessaoVotacaoDataInvalidaException ex) {
 		String mensagemUsuario = messageSource.getMessage("sessaoVotacao.data-invalida", null,
+				LocaleContextHolder.getLocale());
+		String mensagemDesenvolvedor = ex.toString();
+		List<Erro> erros = Arrays.asList(new Erro(mensagemUsuario, mensagemDesenvolvedor));
+		return ResponseEntity.badRequest().body(erros);
+	}
+
+	@ExceptionHandler({ SessaoVotacaoNaoEncerradaException.class })
+	public ResponseEntity<Object> handleSessaoVotacaoNaoEncerradaException(SessaoVotacaoNaoEncerradaException ex) {
+		String mensagemUsuario = messageSource.getMessage("sessaoVotacao.nao-encerrada", null,
 				LocaleContextHolder.getLocale());
 		String mensagemDesenvolvedor = ex.toString();
 		List<Erro> erros = Arrays.asList(new Erro(mensagemUsuario, mensagemDesenvolvedor));
