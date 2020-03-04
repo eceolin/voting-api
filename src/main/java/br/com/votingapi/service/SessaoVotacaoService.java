@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import br.com.votingapi.model.Pauta;
 import br.com.votingapi.model.SessaoVotacao;
 import br.com.votingapi.repository.SessaoVotacaoRepository;
+import br.com.votingapi.service.exception.SessaoVotacaoDataInvalidaException;
 import br.com.votingapi.service.exception.SessaoVotacaoJaCadastradaException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,8 +57,9 @@ public class SessaoVotacaoService {
 			dataFim = dataInicio.plus(1, ChronoUnit.MINUTES);
 		}
 
+		// Data inválida. Data inicial maior que a final.
 		if (dataInicio.isAfter(dataFim)) {
-			// Data inválida. Data inicial maior que a final.
+			throw new SessaoVotacaoDataInvalidaException();
 		}
 
 		return this.sessaoVotacaoRepository.save(sessaoVotacao);

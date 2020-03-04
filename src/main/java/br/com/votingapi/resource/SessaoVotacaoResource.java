@@ -21,6 +21,7 @@ import br.com.votingapi.exceptionhandler.Erro;
 import br.com.votingapi.model.SessaoVotacao;
 import br.com.votingapi.repository.SessaoVotacaoRepository;
 import br.com.votingapi.service.SessaoVotacaoService;
+import br.com.votingapi.service.exception.SessaoVotacaoDataInvalidaException;
 import br.com.votingapi.service.exception.SessaoVotacaoJaCadastradaException;
 
 /**
@@ -69,6 +70,15 @@ public class SessaoVotacaoResource {
 	@ExceptionHandler({ SessaoVotacaoJaCadastradaException.class })
 	public ResponseEntity<Object> handleSessaoVotacaoJaCadastradaException(SessaoVotacaoJaCadastradaException ex) {
 		String mensagemUsuario = messageSource.getMessage("sessaoVotacao.ja-cadastrada", null,
+				LocaleContextHolder.getLocale());
+		String mensagemDesenvolvedor = ex.toString();
+		List<Erro> erros = Arrays.asList(new Erro(mensagemUsuario, mensagemDesenvolvedor));
+		return ResponseEntity.badRequest().body(erros);
+	}
+
+	@ExceptionHandler({ SessaoVotacaoDataInvalidaException.class })
+	public ResponseEntity<Object> handleSessaoVotacaoDataInvalidaException(SessaoVotacaoDataInvalidaException ex) {
+		String mensagemUsuario = messageSource.getMessage("sessaoVotacao.data-invalida", null,
 				LocaleContextHolder.getLocale());
 		String mensagemDesenvolvedor = ex.toString();
 		List<Erro> erros = Arrays.asList(new Erro(mensagemUsuario, mensagemDesenvolvedor));
