@@ -12,6 +12,8 @@ import javax.persistence.OneToMany;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -34,10 +36,17 @@ public class Pauta implements Serializable {
 	@EqualsAndHashCode.Include
 	private Long codigo;
 
+	/**
+	 * Descrição do assunto da pauta.
+	 */
 	@NotBlank
 	@Column(name = "assunto")
 	private String assunto;
 
+	/**
+	 * Lista de votos da pauta.
+	 */
+	@JsonIgnore
 	@OneToMany(mappedBy = "pauta")
 	private List<Voto> votos;
 }

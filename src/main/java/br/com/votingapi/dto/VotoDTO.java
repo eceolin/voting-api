@@ -18,12 +18,13 @@ public class VotoDTO implements Serializable {
 	private Long codigoAssociado;
 
 	/**
+	 * Código da pauta que o associado está votando.
+	 */
+	private Long codigoPauta;
+
+	/**
 	 * Voto do associado (true = sim e false = não).
 	 */
 	private Boolean voto;
 
-	/**
-	 * Código da pauta que o associado está votando.
-	 */
-	private Long codigoPauta;
 }

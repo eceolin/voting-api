@@ -10,9 +10,10 @@ import br.com.votingapi.dto.VotoDTO;
 import br.com.votingapi.model.Pauta;
 import br.com.votingapi.model.SessaoVotacao;
 import br.com.votingapi.model.Voto;
-import br.com.votingapi.repository.PautaRepository;
 import br.com.votingapi.repository.SessaoVotacaoRepository;
 import br.com.votingapi.repository.VotoRepository;
+import br.com.votingapi.service.exception.SessaoVotacaoEncerradaException;
+import br.com.votingapi.service.exception.SessaoVotacaoNaoIniciadaException;
 
 @Service
 public class VotoService {
@@ -21,33 +22,32 @@ public class VotoService {
 	private VotoRepository votoRepository;
 
 	@Autowired
-	private PautaRepository pautaRepository;
+	private PautaService pautaService;
 
 	@Autowired
 	private SessaoVotacaoRepository sessaoVotacaoRepository;
 
 	public Voto salvar(VotoDTO votoDTO) {
-		Pauta pauta = null;
 
-		Optional<Pauta> pautaOptional = pautaRepository.findById(votoDTO.getCodigoPauta());
-		if (pautaOptional.isPresent()) {
-			pauta = pautaOptional.get();
-		}
-
+		// Salva a data atual.
+		LocalDateTime now = LocalDateTime.now();
 		SessaoVotacao sessaoVotacao = null;
 
+		Pauta pauta = pautaService.buscarPautaPeloCodigo(votoDTO.getCodigoPauta());
+
+		// @@ tratar para jogar exceção.
 		Optional<SessaoVotacao> sessaoVotacaoOptional = sessaoVotacaoRepository.findByPautaCodigo(pauta.getCodigo());
 		if (sessaoVotacaoOptional.isPresent()) {
 			sessaoVotacao = sessaoVotacaoOptional.get();
 		}
 
-		LocalDateTime now = LocalDateTime.now();
-		if (now.isBefore(sessaoVotacao.getDataInicio())) {
-			// Votação não está aberta.
+		// Verifica se a sessão já foi criada e se já iniciou.
+		if (sessaoVotacao == null || now.isBefore(sessaoVotacao.getDataInicio())) {
+			throw new SessaoVotacaoNaoIniciadaException();
 		}
 
 		if (now.isAfter(sessaoVotacao.getDataFim())) {
-			// Votação encerrada.
+			throw new SessaoVotacaoEncerradaException();
 		}
 
 		Voto voto = new Voto();

@@ -35,6 +35,9 @@ public class SessaoVotacao implements Serializable {
 	@EqualsAndHashCode.Include
 	private Long codigo;
 
+	/**
+	 * Pauta que será discutida nessa sessão.
+	 */
 	@NotNull
 	@OneToOne
 	@JoinColumn(name = "codigo_pauta")

@@ -12,7 +12,6 @@ import javax.persistence.ManyToOne;
 import javax.persistence.Table;
 import javax.validation.constraints.NotNull;
 
-import br.com.votingapi.dto.VotoDTO;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -35,17 +34,19 @@ public class Voto implements Serializable {
 	@EqualsAndHashCode.Include
 	private Long codigo;
 
-	@NotNull(message = "A pauta é obrigatória")
+	@NotNull
 	@ManyToOne
 	@JoinColumn(name = "codigo_pauta")
 	private Pauta pauta;
 
+	@NotNull
 	@Column(name = "codigoAssociado")
 	private Long codigoAssociado;
 
 	/**
 	 * Voto do associado. (true = sim e false = não)
 	 */
+	@NotNull
 	@Column(name = "voto")
 	private Boolean voto;
 
