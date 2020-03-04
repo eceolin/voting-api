@@ -34,6 +34,12 @@ public class SessaoVotacaoService {
 	@Autowired
 	private PautaService pautaService;
 
+	/**
+	 * Cria uma nova sessão de votação.
+	 *
+	 * @param sessaoVotacao com dados a serem salvos.
+	 * @return sessao de votacao salva no banco.
+	 */
 	public SessaoVotacao salvar(SessaoVotacao sessaoVotacao) {
 
 		log.trace("Salvando uma nova sessão de votação");
@@ -88,6 +94,8 @@ public class SessaoVotacaoService {
 
 		LocalDateTime now = LocalDateTime.now();
 
+		log.debug("Apurando resultado da votação da sessão {}", codigoSessao);
+
 		SessaoVotacao sessaoVotacao = buscarSessaoVotacaoPeloCodigo(codigoSessao);
 
 		if (now.isBefore(sessaoVotacao.getDataFim())) {
@@ -117,6 +125,12 @@ public class SessaoVotacaoService {
 				.build();
 	}
 
+	/**
+	 * Busca uma sessão de votação pelo código da pauta.
+	 *
+	 * @param codigoPauta da sessão que se deseja buscar.
+	 * @return SessaoVotacao a qual a pauta pertence.
+	 */
 	public SessaoVotacao buscarSessaoVotacaoPeloCodigoPauta(Long codigoPauta) {
 		SessaoVotacao sessaoVotacaoSalva = this.sessaoVotacaoRepository.findByPautaCodigo(codigoPauta)
 				// Se não encontrou row, lança a exceção, para manter o tratamento e retornar o
@@ -125,6 +139,12 @@ public class SessaoVotacaoService {
 		return sessaoVotacaoSalva;
 	}
 
+	/**
+	 * Busca uma sessão de votação pelo ID.
+	 *
+	 * @param codigoSessao que se deseja buscar.
+	 * @return SessaoVotacao do banco de dados.
+	 */
 	public SessaoVotacao buscarSessaoVotacaoPeloCodigo(Long codigoSessao) {
 		SessaoVotacao sessaoVotacaoSalva = this.sessaoVotacaoRepository.findById(codigoSessao)
 				// Se não encontrou row, lança a exceção, para manter o tratamento e retornar o

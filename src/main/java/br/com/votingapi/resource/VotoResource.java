@@ -24,8 +24,15 @@ import br.com.votingapi.service.exception.AssociadoJaVotouException;
 import br.com.votingapi.service.exception.SessaoVotacaoEncerradaException;
 import br.com.votingapi.service.exception.SessaoVotacaoNaoIniciadaException;
 
+/**
+ * Controller responsável por tratar as requisições relacionadas aos votos
+ * feitos pelos associados.
+ *
+ * @author rafael.rutsatz
+ *
+ */
 @RestController
-@RequestMapping("/v1/votos")
+@RequestMapping("/api/v1/votos")
 public class VotoResource {
 
 	@Autowired
@@ -34,6 +41,12 @@ public class VotoResource {
 	@Autowired
 	private MessageSource messageSource;
 
+	/**
+	 * Processa o voto de um associado.
+	 *
+	 * @param votoDTO DTO contendo os dados de votação.
+	 * @return ResponseEntity enviado ao usuário.
+	 */
 	@PostMapping
 	public ResponseEntity<Voto> criar(@Valid @RequestBody VotoDTO votoDTO) {
 		Voto votoSalvo = votoService.salvar(votoDTO);
@@ -44,8 +57,8 @@ public class VotoResource {
 	 * Como essa exception é exclusiva do voto, eu não coloco no ControllerAdvice,
 	 * eu posso deixar somente nessa classe.
 	 *
-	 * @param ex
-	 * @return
+	 * @param ex Exception que foi lançada.
+	 * @return ResponseEntity enviado ao usuário.
 	 */
 	@ExceptionHandler({ SessaoVotacaoNaoIniciadaException.class })
 	public ResponseEntity<Object> handleSessaoVotacaoNaoIniciadaException(SessaoVotacaoNaoIniciadaException ex) {
@@ -56,6 +69,13 @@ public class VotoResource {
 		return ResponseEntity.badRequest().body(erros);
 	}
 
+	/**
+	 * Método que trata a exception quando é feita uma tentativa de voto após o
+	 * término da sessão.
+	 *
+	 * @param ex Exception que foi lançada.
+	 * @return ResponseEntity enviado ao usuário.
+	 */
 	@ExceptionHandler({ SessaoVotacaoEncerradaException.class })
 	public ResponseEntity<Object> handleSessaoVotacaoEncerradaException(SessaoVotacaoEncerradaException ex) {
 		String mensagemUsuario = messageSource.getMessage("sessaoVotacao.encerrada", null,
@@ -65,6 +85,12 @@ public class VotoResource {
 		return ResponseEntity.badRequest().body(erros);
 	}
 
+	/**
+	 * Método que trata a exception quando o associado já votou na pauta.
+	 *
+	 * @param ex Exception que foi lançada.
+	 * @return ResponseEntity enviado ao usuário.
+	 */
 	@ExceptionHandler({ AssociadoJaVotouException.class })
 	public ResponseEntity<Object> handleAssociadoJaVotouException(AssociadoJaVotouException ex) {
 		String mensagemUsuario = messageSource.getMessage("voto.associado-ja-votou", null,

@@ -44,7 +44,8 @@ public class Pauta implements Serializable {
 	private String assunto;
 
 	/**
-	 * Lista de votos da pauta.
+	 * Lista de votos da pauta. Como a lista não precisa ser enviada ao front, está
+	 * com o @JsonIgnore.
 	 */
 	@JsonIgnore
 	@OneToMany(mappedBy = "pauta")

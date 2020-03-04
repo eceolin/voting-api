@@ -15,7 +15,9 @@ import br.com.votingapi.repository.VotoRepository;
 import br.com.votingapi.service.exception.AssociadoJaVotouException;
 import br.com.votingapi.service.exception.SessaoVotacaoEncerradaException;
 import br.com.votingapi.service.exception.SessaoVotacaoNaoIniciadaException;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Service
 public class VotoService {
 
@@ -28,11 +30,20 @@ public class VotoService {
 	@Autowired
 	private SessaoVotacaoRepository sessaoVotacaoRepository;
 
+	/**
+	 * Salva o voto do associado no banco de dados.
+	 *
+	 * @param votoDTO contendo os dados do voto.
+	 * @return voto salvo no banco de dados.
+	 */
 	public Voto salvar(VotoDTO votoDTO) {
 
 		// Salva a data atual.
 		LocalDateTime now = LocalDateTime.now();
 		SessaoVotacao sessaoVotacao = null;
+
+		log.debug("Processando voto para associado {} na pauta {} ", votoDTO.getCodigoAssociado(),
+				votoDTO.getCodigoPauta());
 
 		Pauta pauta = pautaService.buscarPautaPeloCodigo(votoDTO.getCodigoPauta());
 
@@ -65,6 +76,13 @@ public class VotoService {
 		return this.votoRepository.save(voto);
 	}
 
+	/**
+	 * Busca o voto pelo código do associado e pelo código da pauta.
+	 *
+	 * @param codigoAssociado
+	 * @param codigoPauta
+	 * @return voto salvo no banco de dados.
+	 */
 	public Optional<Voto> buscarVotoPeloCodigoAssociadoECodigoPauta(Long codigoAssociado, Long codigoPauta) {
 		return this.votoRepository.findByCodigoAssociadoAndPautaCodigo(codigoAssociado, codigoPauta);
 	}

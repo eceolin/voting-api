@@ -35,7 +35,7 @@ import br.com.votingapi.service.exception.SessaoVotacaoNaoEncerradaException;
  *
  */
 @RestController
-@RequestMapping("/v1/sessoes")
+@RequestMapping("/api/v1/sessoes")
 public class SessaoVotacaoResource {
 
 	@Autowired
@@ -94,6 +94,13 @@ public class SessaoVotacaoResource {
 		return sessaoVotacaoService.resultado(codigo);
 	}
 
+	/**
+	 * Método que trata a exception quando já existe uma sessão de votação
+	 * cadastrada.
+	 *
+	 * @param ex Exception que foi lançada.
+	 * @return ResponseEntity enviado ao usuário.
+	 */
 	@ExceptionHandler({ SessaoVotacaoJaCadastradaException.class })
 	public ResponseEntity<Object> handleSessaoVotacaoJaCadastradaException(SessaoVotacaoJaCadastradaException ex) {
 		String mensagemUsuario = messageSource.getMessage("sessaoVotacao.ja-cadastrada", null,
@@ -103,6 +110,13 @@ public class SessaoVotacaoResource {
 		return ResponseEntity.badRequest().body(erros);
 	}
 
+	/**
+	 * Método que trata a exception quando é enviada uma data inválida para a
+	 * abertura de uma sessão de votação.
+	 *
+	 * @param ex Exception que foi lançada.
+	 * @return ResponseEntity enviado ao usuário.
+	 */
 	@ExceptionHandler({ SessaoVotacaoDataInvalidaException.class })
 	public ResponseEntity<Object> handleSessaoVotacaoDataInvalidaException(SessaoVotacaoDataInvalidaException ex) {
 		String mensagemUsuario = messageSource.getMessage("sessaoVotacao.data-invalida", null,
@@ -112,6 +126,13 @@ public class SessaoVotacaoResource {
 		return ResponseEntity.badRequest().body(erros);
 	}
 
+	/**
+	 * Método que trata a exception quando é solicitado a apuração dos votos mas a
+	 * sessão de votação ainda está aberta.
+	 *
+	 * @param ex Exception que foi lançada.
+	 * @return ResponseEntity enviado ao usuário.
+	 */
 	@ExceptionHandler({ SessaoVotacaoNaoEncerradaException.class })
 	public ResponseEntity<Object> handleSessaoVotacaoNaoEncerradaException(SessaoVotacaoNaoEncerradaException ex) {
 		String mensagemUsuario = messageSource.getMessage("sessaoVotacao.nao-encerrada", null,

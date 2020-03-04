@@ -27,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @RestController
-@RequestMapping("/v1/pautas")
+@RequestMapping("/api/v1/pautas")
 public class PautaResource {
 
 	@Autowired

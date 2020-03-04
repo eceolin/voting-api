@@ -36,11 +36,17 @@ public class Voto implements Serializable {
 	@EqualsAndHashCode.Include
 	private Long codigo;
 
+	/**
+	 * Pauta a qual o voto está relacionado.
+	 */
 	@NotNull
 	@ManyToOne
 	@JoinColumn(name = "codigo_pauta")
 	private Pauta pauta;
 
+	/**
+	 * ID do associado que realizou o voto.
+	 */
 	@NotNull
 	@Column(name = "codigoAssociado")
 	private Long codigoAssociado;

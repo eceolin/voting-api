@@ -25,7 +25,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
  * ResponseEntityExceptionHandler captura exceções de resposta de entidades.
  * Adiciono o @ControllerAdvice, que faz com que a classe escute toda a
  * aplicação.
- * 
+ *
  * @author rafael.rutsatz
  *
  */
@@ -89,7 +89,7 @@ public class VotingApiExceptionHandler extends ResponseEntityExceptionHandler {
 	 * Trata para os casos de campos inválidos, pois a validação pode ter falhado em
 	 * vários campos.
 	 *
-	 * @return
+	 * @return Lista de erros.
 	 */
 	private List<Erro> criarListaDeErros(BindingResult bindingResult) {
 		List<Erro> erros = new ArrayList<>();
