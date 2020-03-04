@@ -20,6 +20,7 @@ import br.com.votingapi.dto.VotoDTO;
 import br.com.votingapi.exceptionhandler.Erro;
 import br.com.votingapi.model.Voto;
 import br.com.votingapi.service.VotoService;
+import br.com.votingapi.service.exception.AssociadoJaVotouException;
 import br.com.votingapi.service.exception.SessaoVotacaoEncerradaException;
 import br.com.votingapi.service.exception.SessaoVotacaoNaoIniciadaException;
 
@@ -58,6 +59,15 @@ public class VotoResource {
 	@ExceptionHandler({ SessaoVotacaoEncerradaException.class })
 	public ResponseEntity<Object> handleSessaoVotacaoEncerradaException(SessaoVotacaoEncerradaException ex) {
 		String mensagemUsuario = messageSource.getMessage("sessaoVotacao.encerrada", null,
+				LocaleContextHolder.getLocale());
+		String mensagemDesenvolvedor = ex.toString();
+		List<Erro> erros = Arrays.asList(new Erro(mensagemUsuario, mensagemDesenvolvedor));
+		return ResponseEntity.badRequest().body(erros);
+	}
+
+	@ExceptionHandler({ AssociadoJaVotouException.class })
+	public ResponseEntity<Object> handleAssociadoJaVotouException(AssociadoJaVotouException ex) {
+		String mensagemUsuario = messageSource.getMessage("voto.associado-ja-votou", null,
 				LocaleContextHolder.getLocale());
 		String mensagemDesenvolvedor = ex.toString();
 		List<Erro> erros = Arrays.asList(new Erro(mensagemUsuario, mensagemDesenvolvedor));

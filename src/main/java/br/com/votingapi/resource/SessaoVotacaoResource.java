@@ -12,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -65,6 +66,18 @@ public class SessaoVotacaoResource {
 	public ResponseEntity<SessaoVotacao> criar(@Valid @RequestBody SessaoVotacao sessaoVotacao) {
 		SessaoVotacao sessaoVotacaoSalva = sessaoVotacaoService.salvar(sessaoVotacao);
 		return ResponseEntity.status(HttpStatus.CREATED).body(sessaoVotacaoSalva);
+	}
+
+	/**
+	 * Recupera uma sessao de votação pelo id.
+	 *
+	 * @param codigo da sessao de votacao
+	 * @return A sessao de votacao encontrada
+	 */
+	@GetMapping("/{codigo}")
+	public ResponseEntity<?> buscarPeloCodigo(@PathVariable Long codigo) {
+		return this.sessaoVotacaoRepository.findById(codigo).map(sessaoVotacao -> ResponseEntity.ok(sessaoVotacao))
+				.orElse(ResponseEntity.notFound().build());
 	}
 
 	@ExceptionHandler({ SessaoVotacaoJaCadastradaException.class })

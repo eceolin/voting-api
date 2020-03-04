@@ -12,6 +12,7 @@ import br.com.votingapi.model.SessaoVotacao;
 import br.com.votingapi.model.Voto;
 import br.com.votingapi.repository.SessaoVotacaoRepository;
 import br.com.votingapi.repository.VotoRepository;
+import br.com.votingapi.service.exception.AssociadoJaVotouException;
 import br.com.votingapi.service.exception.SessaoVotacaoEncerradaException;
 import br.com.votingapi.service.exception.SessaoVotacaoNaoIniciadaException;
 
@@ -35,7 +36,6 @@ public class VotoService {
 
 		Pauta pauta = pautaService.buscarPautaPeloCodigo(votoDTO.getCodigoPauta());
 
-		// @@ tratar para jogar exceção.
 		Optional<SessaoVotacao> sessaoVotacaoOptional = sessaoVotacaoRepository.findByPautaCodigo(pauta.getCodigo());
 		if (sessaoVotacaoOptional.isPresent()) {
 			sessaoVotacao = sessaoVotacaoOptional.get();
@@ -50,12 +50,23 @@ public class VotoService {
 			throw new SessaoVotacaoEncerradaException();
 		}
 
+		// verificar se o associado já votou nessa pauta.
+		Optional<Voto> votoOptional = buscarVotoPeloCodigoAssociadoECodigoPauta(votoDTO.getCodigoAssociado(),
+				pauta.getCodigo());
+		if (votoOptional.isPresent()) {
+			throw new AssociadoJaVotouException();
+		}
+
 		Voto voto = new Voto();
 		voto.setCodigoAssociado(votoDTO.getCodigoAssociado());
 		voto.setPauta(pauta);
 		voto.setVoto(votoDTO.getVoto());
 
 		return this.votoRepository.save(voto);
+	}
+
+	public Optional<Voto> buscarVotoPeloCodigoAssociadoECodigoPauta(Long codigoAssociado, Long codigoPauta) {
+		return this.votoRepository.findByCodigoAssociadoAndPautaCodigo(codigoAssociado, codigoPauta);
 	}
 
 }
