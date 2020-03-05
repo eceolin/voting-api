@@ -21,6 +21,7 @@ import br.com.votingapi.exceptionhandler.Erro;
 import br.com.votingapi.model.Voto;
 import br.com.votingapi.service.VotoService;
 import br.com.votingapi.service.exception.AssociadoJaVotouException;
+import br.com.votingapi.service.exception.AssociadoSemPermissaoParaVotarException;
 import br.com.votingapi.service.exception.SessaoVotacaoEncerradaException;
 import br.com.votingapi.service.exception.SessaoVotacaoNaoIniciadaException;
 
@@ -94,6 +95,22 @@ public class VotoResource {
 	@ExceptionHandler({ AssociadoJaVotouException.class })
 	public ResponseEntity<Object> handleAssociadoJaVotouException(AssociadoJaVotouException ex) {
 		String mensagemUsuario = messageSource.getMessage("voto.associado-ja-votou", null,
+				LocaleContextHolder.getLocale());
+		String mensagemDesenvolvedor = ex.toString();
+		List<Erro> erros = Arrays.asList(new Erro(mensagemUsuario, mensagemDesenvolvedor));
+		return ResponseEntity.badRequest().body(erros);
+	}
+
+	/**
+	 * Método que trata a exception quando o associado não tem permissão para votar.
+	 *
+	 * @param ex Exception que foi lançada.
+	 * @return ResponseEntity enviado ao usuário.
+	 */
+	@ExceptionHandler({ AssociadoSemPermissaoParaVotarException.class })
+	public ResponseEntity<Object> handleAssociadoSemPermissaoParaVotarException(
+			AssociadoSemPermissaoParaVotarException ex) {
+		String mensagemUsuario = messageSource.getMessage("voto.associado-sem-permissao", null,
 				LocaleContextHolder.getLocale());
 		String mensagemDesenvolvedor = ex.toString();
 		List<Erro> erros = Arrays.asList(new Erro(mensagemUsuario, mensagemDesenvolvedor));

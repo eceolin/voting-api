@@ -2,6 +2,10 @@ package br.com.votingapi.dto;
 
 import java.io.Serializable;
 
+import javax.validation.constraints.NotBlank;
+
+import org.hibernate.validator.constraints.br.CPF;
+
 import lombok.Data;
 
 /**
@@ -15,7 +19,17 @@ public class VotoDTO implements Serializable {
 
 	private static final long serialVersionUID = 1L;
 
+	/**
+	 * Código do associado que está votando.
+	 */
 	private Long codigoAssociado;
+
+	/**
+	 * CPF do associado que estávotando.
+	 */
+	@NotBlank
+	@CPF
+	private String cpfAssociado;
 
 	/**
 	 * Código da pauta que o associado está votando.

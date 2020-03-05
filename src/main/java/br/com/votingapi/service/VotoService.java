@@ -30,6 +30,9 @@ public class VotoService {
 	@Autowired
 	private SessaoVotacaoRepository sessaoVotacaoRepository;
 
+	@Autowired
+	private CPFService cpfService;
+
 	/**
 	 * Salva o voto do associado no banco de dados.
 	 *
@@ -41,6 +44,8 @@ public class VotoService {
 		// Salva a data atual.
 		LocalDateTime now = LocalDateTime.now();
 		SessaoVotacao sessaoVotacao = null;
+
+		cpfService.verificarSeCPFPodeVotar(votoDTO.getCpfAssociado());
 
 		log.debug("Processando voto para associado {} na pauta {} ", votoDTO.getCodigoAssociado(),
 				votoDTO.getCodigoPauta());
