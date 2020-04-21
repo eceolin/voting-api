@@ -1,0 +1,17 @@
+---
+spring:
+  profiles:
+    # Profile ativo por default ao subir a aplicação.
+    active: dev
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+
+---
+spring:
+  profiles: dev
+  data:
+    mongodb:
+      host: localhost
+      port: 27017
+      database: local
