@@ -1,7 +1,7 @@
 package br.com.votingapi.infrastructure.api.rest;
 
 import br.com.votingapi.domain.model.SessaoVotacao;
-import br.com.votingapi.domain.model.Voto;
+import br.com.votingapi.infrastructure.api.rest.dto.SessaoVotacaoDto;
 import br.com.votingapi.infrastructure.api.rest.dto.VotoDTO;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.SessaoVotacaoRepository;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.projection.ResumoVotacao;
@@ -16,10 +16,9 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.hateoas.MediaTypes;
-import org.springframework.hateoas.server.ExposesResourceFor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -29,69 +28,70 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.validation.Valid;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
 @RestController
 @Slf4j
 @Validated
-@ExposesResourceFor(SessaoVotacao.class)
-@RequestMapping(value = "/api/v1/sessoes", produces = MediaTypes.HAL_JSON_VALUE)
+@RequestMapping(value = "/api/v1/sessoes")
 @Tag(name = "sessão de votação", description = "API de acesso a sessão de votação")
 public class SessaoVotacaoController {
 
     private final SessaoVotacaoRepository sessaoVotacaoRepository;
     private final SessaoVotacaoService sessaoVotacaoService;
     private final MessageSource messageSource;
+    private final ModelMapper modelMapper;
 
     public SessaoVotacaoController(SessaoVotacaoRepository sessaoVotacaoRepository,
                                    SessaoVotacaoService sessaoVotacaoService,
-                                   MessageSource messageSource) {
+                                   MessageSource messageSource, ModelMapper modelMapper) {
         this.sessaoVotacaoRepository = sessaoVotacaoRepository;
         this.sessaoVotacaoService = sessaoVotacaoService;
         this.messageSource = messageSource;
+        this.modelMapper = modelMapper;
     }
 
     @GetMapping
     @Operation(summary = "Listar sessões de votação", description = "Lista todas as sessões de votação")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso",
-                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = SessaoVotacao.class)))),
+                    content = @Content(array = @ArraySchema(schema = @Schema(implementation = SessaoVotacaoDto.class)))),
             @ApiResponse(responseCode = "400", description = "Requisição inválida."),
             @ApiResponse(responseCode = "500", description = "Erro interno.")})
-    public Flux<SessaoVotacao> listar() {
-        return sessaoVotacaoRepository.findAll();
+    public Flux<SessaoVotacaoDto> listar() {
+        return sessaoVotacaoRepository.findAll()
+                .map(sessaoVotacao -> modelMapper.map(sessaoVotacao, SessaoVotacaoDto.class));
     }
 
     @PostMapping
     @Operation(summary = "Cadastrar sessão de votação", description = "Cria uma nova sessão de votação")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Operação realizada com sucesso",
-                    content = @Content(schema = @Schema(implementation = SessaoVotacao.class))),
+                    content = @Content(schema = @Schema(implementation = SessaoVotacaoDto.class))),
             @ApiResponse(responseCode = "400", description = "Requisição inválida."),
             @ApiResponse(responseCode = "404", description = "Recurso não encontrado."),
             @ApiResponse(responseCode = "500", description = "Erro interno.")})
-    public Mono<ResponseEntity<SessaoVotacao>> criar(
-            @Valid @RequestBody SessaoVotacao sessaoVotacao) {
-//        return sessaoVotacaoService.salvar(SessaoVotacaoTranslator.paraModelo(sessaoVotacaoDto))
-        return sessaoVotacaoService.salvar(sessaoVotacao)
-                .map(sessaoSalva -> ResponseEntity
+    public Mono<ResponseEntity<SessaoVotacaoDto>> criar(
+            @Valid @RequestBody SessaoVotacaoDto sessaoVotacao) {
+        return sessaoVotacaoService.salvar(modelMapper.map(sessaoVotacao, SessaoVotacao.class))
+                .map(sessaoSalva -> modelMapper.map(sessaoSalva, SessaoVotacaoDto.class))
+                .map(sessaoDto -> ResponseEntity
                         .status(HttpStatus.CREATED)
-                        .body(sessaoSalva));
-//                        .body(SessaoVotacaoTranslator.paraRecurso(sessaoSalva)));
+                        .body(sessaoDto));
     }
 
     @GetMapping("/{id}")
     @Operation(summary = "Buscar sessão de votação por id", description = "Busca a sessão de votação pelo id")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Operação realizada com sucesso",
-                    content = @Content(schema = @Schema(implementation = SessaoVotacao.class))),
+                    content = @Content(schema = @Schema(implementation = SessaoVotacaoDto.class))),
             @ApiResponse(responseCode = "400", description = "Requisição inválida."),
             @ApiResponse(responseCode = "404", description = "Recurso não encontrado."),
             @ApiResponse(responseCode = "500", description = "Erro interno.")})
-    public Mono<ResponseEntity<SessaoVotacao>> buscarPeloId(@PathVariable String id) {
+    public Mono<ResponseEntity<SessaoVotacaoDto>> buscarPeloId(@PathVariable String id) {
         return this.sessaoVotacaoRepository.findById(id)
+                .map(sessaoVotacao -> modelMapper.map(sessaoVotacao, SessaoVotacaoDto.class))
                 .map(ResponseEntity::ok)
                 .defaultIfEmpty(ResponseEntity.notFound().build());
     }
@@ -103,10 +103,11 @@ public class SessaoVotacaoController {
                     content = @Content(schema = @Schema(implementation = VotoDTO.class))),
             @ApiResponse(responseCode = "400", description = "Dados inválidos"),
             @ApiResponse(responseCode = "409", description = "Associado já votou")})
-    public Mono<ResponseEntity<Voto>> votar(@PathVariable String idSessao,
-                                            @Valid @RequestBody VotoDTO votoDTO) {
+    public Mono<ResponseEntity<VotoDTO>> votar(@PathVariable String idSessao,
+                                               @Valid @RequestBody VotoDTO votoDTO) {
         return sessaoVotacaoService.votar(idSessao, votoDTO)
-                .map(voto -> ResponseEntity.status(HttpStatus.CREATED).body(voto));
+                .map(votoSalvo -> modelMapper.map(votoSalvo, VotoDTO.class))
+                .map(votoDto -> ResponseEntity.status(HttpStatus.CREATED).body(votoDto));
     }
 
     @GetMapping("/{idSessao}/resultado")

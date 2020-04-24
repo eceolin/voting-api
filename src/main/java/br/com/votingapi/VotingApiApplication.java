@@ -3,13 +3,11 @@ package br.com.votingapi;
 import lombok.Generated;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.hateoas.config.EnableHypermediaSupport;
 
 import javax.annotation.PostConstruct;
 import java.util.TimeZone;
 
 @SpringBootApplication
-@EnableHypermediaSupport(type = EnableHypermediaSupport.HypermediaType.HAL)
 public class VotingApiApplication {
 
     @Generated

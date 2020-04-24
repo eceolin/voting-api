@@ -1,6 +1,5 @@
 package br.com.votingapi.infrastructure.configuration;
 
-
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
 import io.swagger.v3.oas.models.info.Info;
@@ -17,4 +16,5 @@ public class OpenApiConfig {
                         .title("API de votação")
                         .description("API para gerenciar sessões de votação dos associados."));
     }
+
 }

@@ -3,6 +3,7 @@ package br.com.votingapi.infrastructure.api.rest;
 import br.com.votingapi.domain.model.Pauta;
 import br.com.votingapi.domain.model.SessaoVotacao;
 import br.com.votingapi.domain.model.Voto;
+import br.com.votingapi.infrastructure.api.rest.dto.SessaoVotacaoDto;
 import br.com.votingapi.infrastructure.api.rest.dto.VotoDTO;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.PautaRepository;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.SessaoVotacaoRepository;
@@ -16,7 +17,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -122,18 +122,108 @@ public class SessaoVotacaoControllerTest {
         webTestClient.get().uri(ENDPOINT_URL)
                 .exchange()
                 .expectStatus().isOk()
-                .expectHeader().contentType(MediaTypes.HAL_JSON_VALUE)
-                .expectBodyList(SessaoVotacao.class)
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBodyList(SessaoVotacaoDto.class)
                 .hasSize(4)
                 .consumeWith(response -> {
-                    List<SessaoVotacao> sessoes = response.getResponseBody();
+                    List<SessaoVotacaoDto> sessoes = response.getResponseBody();
                     assert sessoes != null;
                     sessoes.forEach(sessao -> {
-                        /* Verificar se todas as sessoes foram inseridas. */
-                        assertNotNull(sessao.getId());
-                        assertNotNull(sessao.getPauta().getId());
+                        assertNotNull(sessao.getPauta());
+                        assertNotNull(sessao.getDataInicio());
+                        assertNotNull(sessao.getDataInicio());
                     });
                 });
+    }
+
+    @Test
+    public void criarSessao() {
+        SessaoVotacaoDto sessao = new SessaoVotacaoDto("E", parse("2020-04-19T17:03:00"), parse("2020-04-19T17:03:00"));
+
+        webTestClient.post().uri(ENDPOINT_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(sessao), SessaoVotacaoDto.class)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody()
+                .jsonPath("$.pauta").isEqualTo("E")
+                .jsonPath("$.dataInicio").isEqualTo("2020-04-19T17:03:00")
+                .jsonPath("$.dataFim").isEqualTo("2020-04-19T17:03:00");
+    }
+
+    @Test
+    public void criarSessaoSemInformarDatas() {
+        SessaoVotacaoDto sessaoVotacao = new SessaoVotacaoDto("E", null, null);
+        Flux<SessaoVotacaoDto> sessaoVotacaoFlux = webTestClient.post().uri(ENDPOINT_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(sessaoVotacao), SessaoVotacaoDto.class)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .returnResult(SessaoVotacaoDto.class)
+                .getResponseBody();
+
+        StepVerifier.create(sessaoVotacaoFlux)
+                .expectSubscription()
+                .consumeNextWith(sessao -> {
+                    assertNotNull(sessao.getPauta());
+                    assertNotNull(sessao.getDataInicio());
+                    assertNotNull(sessao.getDataFim());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    public void criarSessaoSemInformarDataFim() {
+        LocalDateTime dataInicio = parse("2020-04-19T17:03:00");
+        LocalDateTime dataEsperada = dataInicio.plusMinutes(1);
+        SessaoVotacaoDto sessao = new SessaoVotacaoDto("E", dataInicio, null);
+        Flux<SessaoVotacaoDto> sessaoVotacaoFlux = webTestClient.post().uri(ENDPOINT_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(sessao), SessaoVotacaoDto.class)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .returnResult(SessaoVotacaoDto.class)
+                .getResponseBody();
+
+        StepVerifier.create(sessaoVotacaoFlux)
+                .expectSubscription()
+                .consumeNextWith(sessaoVotacao -> {
+                    assertNotNull(sessaoVotacao.getPauta());
+                    assertNotNull(sessaoVotacao.getDataInicio());
+                    assertNotNull(sessaoVotacao.getDataFim());
+                    assertEquals(dataInicio, sessaoVotacao.getDataInicio());
+                    assertEquals(dataEsperada, sessaoVotacao.getDataFim());
+                })
+                .verifyComplete();
+    }
+
+    @Test
+    public void criarSessao_badRequest_sessaoJaCadastrada() {
+        SessaoVotacaoDto sessao = new SessaoVotacaoDto("A",
+                parse("2020-04-19T17:03:00"), parse("2020-04-19T17:03:00"));
+        webTestClient.post().uri(ENDPOINT_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(sessao), SessaoVotacaoDto.class)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$[0].mensagemUsuario")
+                .isEqualTo("Sessão de votação já cadastrada para essa pauta");
+    }
+
+    @Test
+    public void criarSessao_badRequest_dataInicialMaiorQueFinal() {
+        SessaoVotacaoDto sessao = new SessaoVotacaoDto("E",
+                parse("2020-04-19T17:03:01"), parse("2020-04-19T17:03:00"));
+        webTestClient.post().uri(ENDPOINT_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(sessao), SessaoVotacaoDto.class)
+                .exchange()
+                .expectStatus().isBadRequest()
+                .expectBody()
+                .jsonPath("$[0].mensagemUsuario").isEqualTo("Data inválida");
     }
 
     @Test
@@ -142,7 +232,7 @@ public class SessaoVotacaoControllerTest {
                 .exchange()
                 .expectStatus().isOk()
                 .expectBody()
-                .jsonPath("$.pauta.id").isEqualTo("D")
+                .jsonPath("$.pauta").isEqualTo("D")
                 .jsonPath("$.dataInicio").isEqualTo("2020-04-19T17:03:00")
                 .jsonPath("$.dataFim").isEqualTo("2020-04-19T17:03:00");
     }
@@ -155,110 +245,6 @@ public class SessaoVotacaoControllerTest {
     }
 
     @Test
-    public void criarSessao() {
-        SessaoVotacao sessao = new SessaoVotacao(null,
-                new Pauta("E", null),
-                parse("2020-04-19T17:03:00"),
-                parse("2020-04-19T17:03:00"), emptyList());
-
-        webTestClient.post().uri(ENDPOINT_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(sessao), SessaoVotacao.class)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectBody()
-                .jsonPath("$.pauta.id").isEqualTo("E")
-                .jsonPath("$.votos").isEmpty()
-                .jsonPath("$.dataInicio").isEqualTo("2020-04-19T17:03:00")
-                .jsonPath("$.dataFim").isEqualTo("2020-04-19T17:03:00");
-    }
-
-    @Test
-    public void criarSessaoSemInformarDatas() {
-        SessaoVotacao sessaoVotacao = new SessaoVotacao(null,
-                new Pauta("E", null), null, null, emptyList());
-
-        Flux<SessaoVotacao> sessaoVotacaoFlux = webTestClient.post().uri(ENDPOINT_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(sessaoVotacao), SessaoVotacao.class)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectHeader().contentType(MediaTypes.HAL_JSON_VALUE)
-                .returnResult(SessaoVotacao.class)
-                .getResponseBody();
-
-        StepVerifier.create(sessaoVotacaoFlux)
-                .expectSubscription()
-                .consumeNextWith(sessao -> {
-                    assertNotNull(sessao.getId());
-                    assertNotNull(sessao.getDataInicio());
-                    assertNotNull(sessao.getDataFim());
-                })
-                .verifyComplete();
-    }
-
-    @Test
-    public void criarSessaoSemInformarDataFim() {
-        LocalDateTime dataInicio = parse("2020-04-19T17:03:00");
-        LocalDateTime dataEsperada = dataInicio.plusMinutes(1);
-        SessaoVotacao sessao = new SessaoVotacao(null, new Pauta("E", null),
-                dataInicio, null, emptyList());
-
-        Flux<SessaoVotacao> sessaoVotacaoFlux = webTestClient.post().uri(ENDPOINT_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(sessao), SessaoVotacao.class)
-                .exchange()
-                .expectStatus().isCreated()
-                .expectHeader().contentType(MediaTypes.HAL_JSON_VALUE)
-                .returnResult(SessaoVotacao.class)
-                .getResponseBody();
-
-        StepVerifier.create(sessaoVotacaoFlux)
-                .expectSubscription()
-                .consumeNextWith(sessaoVotacao -> {
-                    assertNotNull(sessaoVotacao.getId());
-                    assertNotNull(sessaoVotacao.getDataInicio());
-                    assertNotNull(sessaoVotacao.getDataFim());
-                    assertEquals(dataInicio, sessaoVotacao.getDataInicio());
-                    assertEquals(dataEsperada, sessaoVotacao.getDataFim());
-                })
-                .verifyComplete();
-    }
-
-    @Test
-    public void criarSessao_badRequest_sessaoJaCadastrada() {
-        SessaoVotacao sessao = new SessaoVotacao(null,
-                new Pauta("A", null),
-                parse("2020-04-19T17:03:00"),
-                parse("2020-04-19T17:03:00"), emptyList());
-
-        webTestClient.post().uri(ENDPOINT_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(sessao), SessaoVotacao.class)
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$[0].mensagemUsuario")
-                .isEqualTo("Sessão de votação já cadastrada para essa pauta");
-    }
-
-    @Test
-    public void criarSessao_badRequest_dataInicialMaiorQueFinal() {
-        SessaoVotacao sessao = new SessaoVotacao(null,
-                new Pauta("E", null),
-                parse("2020-04-19T17:03:01"),
-                parse("2020-04-19T17:03:00"), emptyList());
-
-        webTestClient.post().uri(ENDPOINT_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(sessao), SessaoVotacao.class)
-                .exchange()
-                .expectStatus().isBadRequest()
-                .expectBody()
-                .jsonPath("$[0].mensagemUsuario").isEqualTo("Data inválida");
-    }
-
-    @Test
     public void votar() {
         VotoDTO votoDTO = new VotoDTO("26622817073", true);
         Mockito.when(cpfService.verificarSeCPFPodeVotar(votoDTO)).thenReturn(Mono.just(votoDTO));
@@ -268,7 +254,7 @@ public class SessaoVotacaoControllerTest {
                 .body(Mono.just(votoDTO), VotoDTO.class)
                 .exchange()
                 .expectStatus().isCreated()
-                .expectHeader().contentType(MediaTypes.HAL_JSON_VALUE)
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
                 .expectBody()
                 .jsonPath("$.cpfAssociado").isEqualTo("26622817073")
                 .jsonPath("$.voto").isEqualTo(true);
@@ -305,7 +291,8 @@ public class SessaoVotacaoControllerTest {
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectBody()
-                .jsonPath("$[0].mensagemUsuario").isEqualTo("Sessão de votação não iniciada");
+                .jsonPath("$[0].mensagemUsuario")
+                .isEqualTo("Sessão de votação não iniciada");
     }
 
     @Test
@@ -319,7 +306,8 @@ public class SessaoVotacaoControllerTest {
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectBody()
-                .jsonPath("$[0].mensagemUsuario").isEqualTo("Sessão de votação encerrada");
+                .jsonPath("$[0].mensagemUsuario")
+                .isEqualTo("Sessão de votação encerrada");
     }
 
     @Test
@@ -327,7 +315,6 @@ public class SessaoVotacaoControllerTest {
         VotoDTO votoDTO = new VotoDTO("26622817073", true);
         Mockito.when(cpfService.verificarSeCPFPodeVotar(votoDTO))
                 .thenReturn(Mono.error(new AssociadoSemPermissaoParaVotarException()));
-
 
         webTestClient.post().uri(ENDPOINT_URL.concat("/{idSessao}/votar"), "A")
                 .contentType(MediaType.APPLICATION_JSON)
@@ -344,7 +331,7 @@ public class SessaoVotacaoControllerTest {
         webTestClient.get().uri(ENDPOINT_URL.concat("/{idSessao}/resultado"), "ABC")
                 .exchange()
                 .expectStatus().isOk()
-                .expectHeader().contentType(MediaTypes.HAL_JSON_VALUE)
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
                 .expectBody()
                 .jsonPath("$.assunto").isEqualTo("Assunto 4")
                 .jsonPath("$.pros").isEqualTo(3)

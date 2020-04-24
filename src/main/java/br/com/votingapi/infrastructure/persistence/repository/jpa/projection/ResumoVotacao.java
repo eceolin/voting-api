@@ -1,9 +1,7 @@
 package br.com.votingapi.infrastructure.persistence.repository.jpa.projection;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Builder;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import lombok.*;
 
 /**
  * Dados do resumidos da votação, contendo o resultado após a apuração dos
@@ -12,9 +10,7 @@ import lombok.RequiredArgsConstructor;
  * @author rafael.rutsatz
  */
 @Builder
-@Getter
-@RequiredArgsConstructor
-@lombok.Value
+@Data
 public class ResumoVotacao {
 
     @Schema(description = "Descrição do assunto discutido na pauta.",

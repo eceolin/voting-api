@@ -1,13 +1,13 @@
 package br.com.votingapi.infrastructure.api.rest;
 
 import br.com.votingapi.domain.model.Pauta;
+import br.com.votingapi.infrastructure.api.rest.dto.PautaDto;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.PautaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.hateoas.MediaTypes;
 import org.springframework.http.MediaType;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.web.reactive.server.WebTestClient;
@@ -54,17 +54,26 @@ public class PautaControllerTest {
         webTestClient.get().uri(ENDPOINT_URL)
                 .exchange()
                 .expectStatus().isOk()
-                .expectHeader().contentType(MediaTypes.HAL_JSON_VALUE)
-                .expectBodyList(Pauta.class)
+                .expectHeader().contentType(MediaType.APPLICATION_JSON)
+                .expectBodyList(PautaDto.class)
                 .hasSize(4)
                 .consumeWith(response -> {
-                    List<Pauta> pautas = response.getResponseBody();
+                    List<PautaDto> pautas = response.getResponseBody();
                     assert pautas != null;
-                    pautas.forEach(pauta -> {
-                        /* Verificar se todas as pautas foram inseridas. */
-                        assertNotNull(pauta.getId());
-                    });
+                    pautas.forEach(pauta -> assertNotNull(pauta.getAssunto()));
                 });
+    }
+
+    @Test
+    public void criarPauta() {
+        PautaDto pautaDto = new PautaDto("Assunto 5");
+        webTestClient.post().uri(ENDPOINT_URL)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(Mono.just(pautaDto), PautaDto.class)
+                .exchange()
+                .expectStatus().isCreated()
+                .expectBody()
+                .jsonPath("$.assunto").isEqualTo("Assunto 5");
     }
 
     @Test
@@ -81,22 +90,6 @@ public class PautaControllerTest {
         webTestClient.get().uri(ENDPOINT_URL.concat("/{id}"), "DEF")
                 .exchange()
                 .expectStatus().isNotFound();
-    }
-
-    @Test
-    public void criarPauta() {
-        Pauta pauta = new Pauta(null, "Assunto 5");
-
-        webTestClient.post().uri(ENDPOINT_URL)
-                .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(pauta), Pauta.class)
-                .exchange()
-                .expectStatus().isCreated()
-                /* Acessa a resposta. */
-                .expectBody()
-                /* Valida os dados. */
-                .jsonPath("$.id").isNotEmpty()
-                .jsonPath("$.assunto").isEqualTo("Assunto 5");
     }
 
 }

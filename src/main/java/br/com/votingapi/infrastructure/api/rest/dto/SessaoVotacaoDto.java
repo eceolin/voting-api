@@ -6,7 +6,6 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
-import javax.validation.constraints.NotNull;
 import java.time.LocalDateTime;
 
 @Data
@@ -19,12 +18,10 @@ public class SessaoVotacaoDto {
             example = "5ea086a6300c8a110e1de02f", required = true)
     private String pauta;
 
-    @NotNull
     @Schema(description = "Data de inicio da sessão.", defaultValue = "Data Atual",
             example = "2020-04-21T17:03:00")
     private LocalDateTime dataInicio;
 
-    @NotNull
     @Schema(description = "Data de término da sessão.", defaultValue = "Data de inicio acrescido de um minuto",
             example = "2020-04-21T17:04:00")
     private LocalDateTime dataFim;
