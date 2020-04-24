@@ -3,7 +3,7 @@ package br.com.votingapi.infrastructure.api.rest;
 import br.com.votingapi.domain.model.Pauta;
 import br.com.votingapi.infrastructure.api.rest.dto.PautaDto;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.PautaRepository;
-import br.com.votingapi.infrastructure.service.PautaService;
+import br.com.votingapi.application.PautaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;

@@ -8,7 +8,7 @@ import br.com.votingapi.infrastructure.api.rest.dto.VotoDTO;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.PautaRepository;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.SessaoVotacaoRepository;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.VotoRepository;
-import br.com.votingapi.infrastructure.service.CPFService;
+import br.com.votingapi.application.CPFService;
 import br.com.votingapi.infrastructure.service.exception.AssociadoSemPermissaoParaVotarException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

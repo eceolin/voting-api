@@ -5,7 +5,7 @@ import br.com.votingapi.infrastructure.api.rest.dto.SessaoVotacaoDto;
 import br.com.votingapi.infrastructure.api.rest.dto.VotoDTO;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.SessaoVotacaoRepository;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.projection.ResumoVotacao;
-import br.com.votingapi.infrastructure.service.SessaoVotacaoService;
+import br.com.votingapi.application.SessaoVotacaoService;
 import br.com.votingapi.infrastructure.service.exception.*;
 import br.com.votingapi.infrastructure.service.exception.handler.VotingApiExceptionHandler.Erro;
 import io.swagger.v3.oas.annotations.Operation;

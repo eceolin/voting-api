@@ -1,5 +1,8 @@
 package br.com.votingapi.infrastructure.service;
 
+import br.com.votingapi.application.CPFService;
+import br.com.votingapi.domain.model.CpfResponse;
+import br.com.votingapi.domain.model.Status;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

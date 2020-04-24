@@ -1,5 +1,7 @@
 package br.com.votingapi.infrastructure.service;
 
+import br.com.votingapi.application.CPFService;
+import br.com.votingapi.application.SessaoVotacaoService;
 import br.com.votingapi.domain.model.SessaoVotacao;
 import br.com.votingapi.domain.model.Voto;
 import br.com.votingapi.infrastructure.api.rest.dto.VotoDTO;
@@ -24,25 +26,20 @@ import java.util.function.Function;
  */
 @Slf4j
 @Service
-public class SessaoVotacaoService {
+public class SessaoVotacaoServiceImpl implements SessaoVotacaoService {
 
     private final SessaoVotacaoRepository sessaoVotacaoRepository;
     private final VotoRepository votoRepository;
     private final CPFService cpfService;
 
-    public SessaoVotacaoService(SessaoVotacaoRepository sessaoVotacaoRepository,
-                                VotoRepository votoRepository, CPFService cpfService) {
+    public SessaoVotacaoServiceImpl(SessaoVotacaoRepository sessaoVotacaoRepository,
+                                    VotoRepository votoRepository, CPFService cpfService) {
         this.sessaoVotacaoRepository = sessaoVotacaoRepository;
         this.votoRepository = votoRepository;
         this.cpfService = cpfService;
     }
 
-    /**
-     * Cria uma nova sessão de votação.
-     *
-     * @param sessaoVotacao com dados a serem salvos.
-     * @return sessao de votacao salva no banco.
-     */
+    @Override
     public Mono<SessaoVotacao> salvar(SessaoVotacao sessaoVotacao) {
         log.trace("Salvando uma nova sessão de votação");
         return sessaoVotacaoRepository.findByPautaId(sessaoVotacao.getPauta().getId())
@@ -72,13 +69,7 @@ public class SessaoVotacaoService {
         return sessaoVotacao;
     };
 
-    /**
-     * Salva o voto do associado no banco de dados.
-     *
-     * @param idSessao
-     * @param votoDTO  contendo os dados do voto.
-     * @return voto salvo no banco de dados.
-     */
+    @Override
     public Mono<Voto> votar(String idSessao, VotoDTO votoDTO) {
         log.debug("Processando voto para associado {} na sessão {} ", votoDTO.getCpfAssociado(), idSessao);
 
@@ -123,12 +114,7 @@ public class SessaoVotacaoService {
                 .build();
     };
 
-    /**
-     * Apura o resultado da votação.
-     *
-     * @param idSessao Código da sessão que se deseja apurar os votos.
-     * @return Resumo com o resultado.
-     */
+    @Override
     public Mono<ResumoVotacao> apurarResultado(String idSessao) {
         log.debug("Apurando resultado da votação da sessão {}", idSessao);
         return buscarSessaoVotacaoPeloId(idSessao)
@@ -136,12 +122,7 @@ public class SessaoVotacaoService {
                 .map(montarResumo);
     }
 
-    /**
-     * Busca uma sessão de votação pelo ID.
-     *
-     * @param idSessao que se deseja buscar.
-     * @return SessaoVotacao do banco de dados.
-     */
+    @Override
     public Mono<SessaoVotacao> buscarSessaoVotacaoPeloId(String idSessao) {
         return this.sessaoVotacaoRepository.findById(idSessao);
     }
