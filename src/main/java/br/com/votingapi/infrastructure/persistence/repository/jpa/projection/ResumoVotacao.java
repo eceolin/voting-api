@@ -1,29 +1,24 @@
 package br.com.votingapi.infrastructure.persistence.repository.jpa.projection;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.*;
+import lombok.Builder;
+import lombok.Data;
 
-/**
- * Dados do resumidos da votação, contendo o resultado após a apuração dos
- * votos.
- *
- * @author rafael.rutsatz
- */
 @Builder
 @Data
 public class ResumoVotacao {
 
     @Schema(description = "Descrição do assunto discutido na pauta.",
             example = "Aprovar novo orçamento")
-    String assunto;
+    private String assunto;
 
     @Schema(description = "Quantidade de votos a favor da pauta.", example = "80")
-    Long pros;
+    private Long pros;
 
     @Schema(description = "Quantidade de votos contra a pauta.", example = "20")
-    Long contra;
+    private Long contra;
 
     @Schema(description = "Indica se a pauta foi aprovada ou não.", example = "true")
-    Boolean aprovado;
+    private Boolean aprovado;
 
 }

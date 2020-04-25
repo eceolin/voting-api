@@ -14,30 +14,15 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * ResponseEntityExceptionHandler captura exceções de resposta de entidades.
- * Adiciono o @ControllerAdvice, que faz com que a classe escute toda a
- * aplicação.
- *
- * @author rafael.rutsatz
- */
 @ControllerAdvice
 public class VotingApiExceptionHandler {
 
-    /**
-     * Busca as mensagens lá do messages.properties.
-     */
     private final MessageSource messageSource;
 
     public VotingApiExceptionHandler(MessageSource messageSource) {
         this.messageSource = messageSource;
     }
 
-    /**
-     * Não existe um método para sobrescrever que trate a
-     * EmptyResultDataAccessException. Então crio meu próprio método e digo que ele
-     * irá tratar essa Exceção.
-     */
     @ExceptionHandler({EmptyResultDataAccessException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ResponseEntity<Object> handleEmptyResultDataAccessException(EmptyResultDataAccessException ex) {
@@ -45,7 +30,6 @@ public class VotingApiExceptionHandler {
                 LocaleContextHolder.getLocale());
         String mensagemDesenvolvedor = ex.toString();
         List<Erro> erros = Collections.singletonList(new Erro(mensagemUsuario, mensagemDesenvolvedor));
-
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(erros);
     }
 

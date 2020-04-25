@@ -1,10 +1,11 @@
 package br.com.votingapi.infrastructure.service;
 
 import br.com.votingapi.application.CPFService;
+import br.com.votingapi.domain.model.AssociateVotePermission;
 import br.com.votingapi.domain.model.CpfResponse;
-import br.com.votingapi.domain.model.Status;
-import br.com.votingapi.infrastructure.api.rest.dto.VotoDTO;
+import br.com.votingapi.domain.model.Voto;
 import br.com.votingapi.infrastructure.service.exception.AssociadoSemPermissaoParaVotarException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
@@ -18,21 +19,25 @@ import reactor.core.publisher.Mono;
 @Component
 public class CPFServiceImpl implements CPFService {
 
-    private static final String CPF_API_URL = "http://user-info.herokuapp.com/users/{cpf}";
+    private final String cpfApiUrl;
+
+    public CPFServiceImpl(@Value("${cpf-api-url}") String cpfApiUrl) {
+        this.cpfApiUrl = cpfApiUrl;
+    }
 
     @Override
-    public Mono<VotoDTO> verificarSeCPFPodeVotar(VotoDTO votoDTO) {
-        return WebClient.create().get().uri(CPF_API_URL, votoDTO.getCpfAssociado())
+    public Mono<Voto> verificarSeCPFPodeVotar(Voto voto) {
+        return WebClient.create().get().uri(cpfApiUrl, voto.getCpfAssociado())
                 .retrieve()
                 .bodyToMono(CpfResponse.class)
                 .filter(this::podeVotar)
-                .map(cpfResponse -> votoDTO)
+                .map(cpfResponse -> voto)
                 .switchIfEmpty(Mono.error(new AssociadoSemPermissaoParaVotarException()));
     }
 
     @Override
     public Boolean podeVotar(CpfResponse cpfResponse) {
-        return cpfResponse.getStatus() == Status.ABLE_TO_VOTE;
+        return cpfResponse.getAssociateVotePermission() == AssociateVotePermission.ABLE_TO_VOTE;
     }
 }
 

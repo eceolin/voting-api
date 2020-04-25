@@ -1,9 +1,8 @@
 package br.com.votingapi.infrastructure.api.rest;
 
+import br.com.votingapi.application.PautaService;
 import br.com.votingapi.domain.model.Pauta;
 import br.com.votingapi.infrastructure.api.rest.dto.PautaDto;
-import br.com.votingapi.infrastructure.persistence.repository.jpa.PautaRepository;
-import br.com.votingapi.application.PautaService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -27,13 +26,10 @@ import javax.validation.Valid;
 @Tag(name = "pauta", description = "API de acesso a pauta")
 public class PautaController {
 
-    private final PautaRepository pautaRepository;
     private final PautaService pautaService;
     private final ModelMapper modelMapper;
 
-    public PautaController(PautaRepository pautaRepository, PautaService pautaService,
-                           ModelMapper modelMapper) {
-        this.pautaRepository = pautaRepository;
+    public PautaController(PautaService pautaService, ModelMapper modelMapper) {
         this.pautaService = pautaService;
         this.modelMapper = modelMapper;
     }
@@ -47,8 +43,7 @@ public class PautaController {
             @ApiResponse(responseCode = "500", description = "Erro interno.")})
     public Flux<PautaDto> listar() {
         log.trace("Listando todas as pautas.");
-        return pautaRepository
-                .findAll()
+        return pautaService.listarTodas()
                 .map(pauta -> modelMapper.map(pauta, PautaDto.class));
     }
 
@@ -61,8 +56,7 @@ public class PautaController {
             @ApiResponse(responseCode = "404", description = "Recurso não encontrado."),
             @ApiResponse(responseCode = "500", description = "Erro interno.")})
     public Mono<ResponseEntity<PautaDto>> criar(@Valid @RequestBody PautaDto pautaDto) {
-        return pautaService
-                .salvar(modelMapper.map(pautaDto, Pauta.class))
+        return pautaService.salvar(modelMapper.map(pautaDto, Pauta.class))
                 .map(pautaSalva -> modelMapper.map(pautaSalva, PautaDto.class))
                 .map(pautaResponse -> ResponseEntity
                         .status(HttpStatus.CREATED)
@@ -78,7 +72,7 @@ public class PautaController {
             @ApiResponse(responseCode = "404", description = "Recurso não encontrado."),
             @ApiResponse(responseCode = "500", description = "Erro interno.")})
     public Mono<ResponseEntity<PautaDto>> buscarPeloId(@PathVariable String id) {
-        return this.pautaService.buscarPeloId(id)
+        return pautaService.buscarPeloId(id)
                 .map(pautaSalva -> modelMapper.map(pautaSalva, PautaDto.class))
                 .map(ResponseEntity::ok);
     }

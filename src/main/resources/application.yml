@@ -1,8 +1,8 @@
 ---
 spring:
   profiles:
-    # Profile ativo por default ao subir a aplicação.
     active: dev
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
@@ -15,3 +15,5 @@ spring:
       host: localhost
       port: 27017
       database: local
+
+cpf-api-url: http://user-info.herokuapp.com/users/{cpf}

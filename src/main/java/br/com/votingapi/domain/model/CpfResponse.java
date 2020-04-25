@@ -1,12 +1,13 @@
 package br.com.votingapi.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Classe auxiliar para ler a resposta do servidor.
+ * Classe auxiliar para ler a resposta da API de autorização para votar.
  *
  * @author rafael.rutsatz
  */
@@ -14,7 +15,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @Getter
 @Setter
-public
-class CpfResponse {
-    private Status status;
+public class CpfResponse {
+    @JsonAlias("status")
+    private AssociateVotePermission associateVotePermission;
 }

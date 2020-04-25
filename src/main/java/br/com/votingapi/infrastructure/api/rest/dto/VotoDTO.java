@@ -10,11 +10,6 @@ import javax.validation.constraints.NotBlank;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
-/**
- * DTO utilizado para receber o voto de algum associado.
- *
- * @author rafael.rutsatz
- */
 @Data
 @AllArgsConstructor
 @NoArgsConstructor

@@ -14,11 +14,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Entidade que representa uma sessão de votação.
- *
- * @author rafael.rutsatz
- */
 @Document(collection = "sessoes")
 @Data
 @AllArgsConstructor
@@ -36,21 +31,12 @@ public class SessaoVotacao implements Serializable {
     @EqualsAndHashCode.Include
     private String id;
 
-    /**
-     * Pauta que será discutida nessa sessão.
-     */
     @DBRef
     @NotNull
     private Pauta pauta;
 
-    /**
-     * Data de inicio da sessão.
-     */
     private LocalDateTime dataInicio;
 
-    /**
-     * Data de término da sessão.
-     */
     private LocalDateTime dataFim;
 
     @DBRef

@@ -4,7 +4,6 @@ import br.com.votingapi.application.CPFService;
 import br.com.votingapi.application.SessaoVotacaoService;
 import br.com.votingapi.domain.model.SessaoVotacao;
 import br.com.votingapi.domain.model.Voto;
-import br.com.votingapi.infrastructure.api.rest.dto.VotoDTO;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.SessaoVotacaoRepository;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.VotoRepository;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.projection.ResumoVotacao;
@@ -12,18 +11,12 @@ import br.com.votingapi.infrastructure.service.exception.*;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.time.temporal.ChronoUnit;
-import java.util.function.BiFunction;
-import java.util.function.Function;
 
-/**
- * Service usado para regras relacionadas as sessões de votação.
- *
- * @author rafael.rutsatz
- */
 @Slf4j
 @Service
 public class SessaoVotacaoServiceImpl implements SessaoVotacaoService {
@@ -40,49 +33,29 @@ public class SessaoVotacaoServiceImpl implements SessaoVotacaoService {
     }
 
     @Override
+    public Flux<SessaoVotacao> listarTodas() {
+        return sessaoVotacaoRepository.findAll();
+    }
+
+    @Override
     public Mono<SessaoVotacao> salvar(SessaoVotacao sessaoVotacao) {
         log.trace("Salvando uma nova sessão de votação");
         return sessaoVotacaoRepository.findByPautaId(sessaoVotacao.getPauta().getId())
                 .flatMap(s -> Mono.error(new SessaoVotacaoJaCadastradaException()))
-                .then(Mono.just(validar.apply(sessaoVotacao))
+                .then(Mono.just(sessaoVotacao)
+                        .map(this::inicializarDatas)
+                        .map(this::verificarDatasValidas)
                         .flatMap(sessaoVotacaoRepository::save));
     }
 
-    public final Function<SessaoVotacao, SessaoVotacao> validar = sessaoVotacao -> {
-        LocalDateTime dataInicio = sessaoVotacao.getDataInicio();
-
-        if (dataInicio == null) {
-            dataInicio = LocalDateTime.now();
-            sessaoVotacao.setDataInicio(dataInicio);
-        }
-
-        LocalDateTime dataFim = sessaoVotacao.getDataFim();
-        if (dataFim == null) {
-            dataFim = dataInicio.plus(1, ChronoUnit.MINUTES);
-            sessaoVotacao.setDataFim(dataFim);
-        }
-
-        // Data inválida. Data inicial maior que a final.
-        if (dataInicio.isAfter(dataFim)) {
-            throw new SessaoVotacaoDataInvalidaException();
-        }
-        return sessaoVotacao;
-    };
-
     @Override
-    public Mono<Voto> votar(String idSessao, VotoDTO votoDTO) {
-        log.debug("Processando voto para associado {} na sessão {} ", votoDTO.getCpfAssociado(), idSessao);
-
-        Voto voto = Voto.builder()
-                .cpfAssociado(votoDTO.getCpfAssociado())
-                .voto(votoDTO.getVoto())
-                .build();
-
-        return cpfService.verificarSeCPFPodeVotar(votoDTO)
+    public Mono<Voto> votar(String idSessao, Voto voto) {
+        log.debug("Processando voto para associado {} na sessão {} ", voto.getCpfAssociado(), idSessao);
+        return cpfService.verificarSeCPFPodeVotar(voto)
                 .then(sessaoVotacaoRepository.findById(idSessao))
                 .switchIfEmpty(Mono.error(
                         new EmptyResultDataAccessException("Sessão de Votação não encontrada.", 1)))
-                .map(sessaoVotacao -> validarSessao.apply(sessaoVotacao, votoDTO))
+                .map(sessaoVotacao -> validarSessao(sessaoVotacao, voto))
                 .zipWith(votoRepository.save(voto))
                 .flatMap(tuple2 -> {
                     tuple2.getT1().getVotos().add(tuple2.getT2());
@@ -91,35 +64,12 @@ public class SessaoVotacaoServiceImpl implements SessaoVotacaoService {
                 .thenReturn(voto);
     }
 
-    private final Function<SessaoVotacao, SessaoVotacao> validarDatas = sessaoVotacao -> {
-        LocalDateTime dataInicio = sessaoVotacao.getDataInicio();
-        LocalDateTime dataFim = sessaoVotacao.getDataFim();
-        // Data inválida. Data inicial maior que a final.
-        if (dataInicio.isBefore(dataFim)) {
-            throw new SessaoVotacaoNaoEncerradaException();
-        }
-        return sessaoVotacao;
-    };
-
-    public final Function<SessaoVotacao, ResumoVotacao> montarResumo = sessaoVotacao -> {
-        Long pros = sessaoVotacao.getVotos().stream()
-                .filter(Voto::getVoto)
-                .count();
-        Long contra = sessaoVotacao.getVotos().size() - pros;
-        return ResumoVotacao.builder()
-                .pros(pros)
-                .contra(contra)
-                .assunto(sessaoVotacao.getPauta().getAssunto())
-                .aprovado(pros > contra) // Maioria simples para aprovar.
-                .build();
-    };
-
     @Override
-    public Mono<ResumoVotacao> apurarResultado(String idSessao) {
+    public Mono<ResumoVotacao> apurarResultadoVotacao(String idSessao) {
         log.debug("Apurando resultado da votação da sessão {}", idSessao);
         return buscarSessaoVotacaoPeloId(idSessao)
-                .map(validarDatas)
-                .map(montarResumo);
+                .map(this::validarSessaoEncerrada)
+                .map(this::montarResumo);
     }
 
     @Override
@@ -127,23 +77,81 @@ public class SessaoVotacaoServiceImpl implements SessaoVotacaoService {
         return this.sessaoVotacaoRepository.findById(idSessao);
     }
 
-    public BiFunction<SessaoVotacao, VotoDTO, SessaoVotacao> validarSessao = (sessaoVotacao, votoDTO) -> {
+    private SessaoVotacao inicializarDatas(SessaoVotacao sessaoVotacao) {
+        LocalDateTime dataInicio = sessaoVotacao.getDataInicio();
+        LocalDateTime dataFim = sessaoVotacao.getDataFim();
+
+        if (dataInicio == null) {
+            dataInicio = LocalDateTime.now();
+            sessaoVotacao.setDataInicio(dataInicio);
+        }
+
+        if (dataFim == null) {
+            dataFim = dataInicio.plus(1, ChronoUnit.MINUTES);
+            sessaoVotacao.setDataFim(dataFim);
+        }
+        return sessaoVotacao;
+    }
+
+    private SessaoVotacao validarSessao(SessaoVotacao sessaoVotacao, Voto voto) {
         LocalDateTime now = LocalDateTime.now();
-        // Verifica se a sessão já foi criada e se já iniciou.
-        if (now.isBefore(sessaoVotacao.getDataInicio())) {
-            throw new SessaoVotacaoNaoIniciadaException();
-        }
-        if (now.isAfter(sessaoVotacao.getDataFim())) {
-            throw new SessaoVotacaoEncerradaException();
-        }
-        // verificar se o associado já votou nessa pauta.
+        verificaSeSessaoFoiIniciada(sessaoVotacao, now);
+        verificaSeSessaoEstaEncerrada(sessaoVotacao, now);
+        verificarSeAssociadoJaVotouNessaPauta(sessaoVotacao, voto);
+        return sessaoVotacao;
+    }
+
+    private void verificarSeAssociadoJaVotouNessaPauta(SessaoVotacao sessaoVotacao, Voto voto) {
         sessaoVotacao.getVotos().stream()
-                .filter(voto -> voto.getCpfAssociado().equals(votoDTO.getCpfAssociado()))
+                .filter(voto1 -> voto1.getCpfAssociado().equals(voto.getCpfAssociado()))
                 .findAny()
                 .ifPresent(v -> {
                     throw new AssociadoJaVotouException();
                 });
+    }
+
+    private void verificaSeSessaoEstaEncerrada(SessaoVotacao sessaoVotacao, LocalDateTime now) {
+        if (now.isAfter(sessaoVotacao.getDataFim())) {
+            throw new SessaoVotacaoEncerradaException();
+        }
+    }
+
+    private void verificaSeSessaoFoiIniciada(SessaoVotacao sessaoVotacao, LocalDateTime now) {
+        if (now.isBefore(sessaoVotacao.getDataInicio())) {
+            throw new SessaoVotacaoNaoIniciadaException();
+        }
+    }
+
+    private SessaoVotacao verificarDatasValidas(SessaoVotacao sessaoVotacao) {
+        if (sessaoVotacao.getDataInicio().isAfter(sessaoVotacao.getDataFim())) {
+            throw new SessaoVotacaoDataInvalidaException();
+        }
         return sessaoVotacao;
-    };
+    }
+
+    private SessaoVotacao validarSessaoEncerrada(SessaoVotacao sessaoVotacao) {
+        if (sessaoVotacao.getDataInicio().isBefore(sessaoVotacao.getDataFim())) {
+            throw new SessaoVotacaoNaoEncerradaException();
+        }
+        return sessaoVotacao;
+    }
+
+    private ResumoVotacao montarResumo(SessaoVotacao sessaoVotacao) {
+        long qtdPros = sessaoVotacao.getVotos()
+                .stream()
+                .filter(Voto::getVoto)
+                .count();
+
+        long qtdContra = sessaoVotacao.getVotos().size() - qtdPros;
+
+        boolean aprovado = qtdPros > qtdContra; // Maioria simples para aprovar.
+
+        return ResumoVotacao.builder()
+                .assunto(sessaoVotacao.getPauta().getAssunto())
+                .pros(qtdPros)
+                .contra(qtdContra)
+                .aprovado(aprovado)
+                .build();
+    }
 
 }

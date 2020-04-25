@@ -1,5 +1,6 @@
 package br.com.votingapi.infrastructure.api.rest;
 
+import br.com.votingapi.application.CPFService;
 import br.com.votingapi.domain.model.Pauta;
 import br.com.votingapi.domain.model.SessaoVotacao;
 import br.com.votingapi.domain.model.Voto;
@@ -8,7 +9,6 @@ import br.com.votingapi.infrastructure.api.rest.dto.VotoDTO;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.PautaRepository;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.SessaoVotacaoRepository;
 import br.com.votingapi.infrastructure.persistence.repository.jpa.VotoRepository;
-import br.com.votingapi.application.CPFService;
 import br.com.votingapi.infrastructure.service.exception.AssociadoSemPermissaoParaVotarException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -138,7 +138,8 @@ public class SessaoVotacaoControllerTest {
 
     @Test
     public void criarSessao() {
-        SessaoVotacaoDto sessao = new SessaoVotacaoDto("E", parse("2020-04-19T17:03:00"), parse("2020-04-19T17:03:00"));
+        SessaoVotacaoDto sessao = new SessaoVotacaoDto("E", parse("2020-04-19T17:03:00"),
+                parse("2020-04-19T17:03:00"));
 
         webTestClient.post().uri(ENDPOINT_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -246,12 +247,12 @@ public class SessaoVotacaoControllerTest {
 
     @Test
     public void votar() {
-        VotoDTO votoDTO = new VotoDTO("26622817073", true);
-        Mockito.when(cpfService.verificarSeCPFPodeVotar(votoDTO)).thenReturn(Mono.just(votoDTO));
+        var voto = new Voto(null, "26622817073", true);
+        Mockito.when(cpfService.verificarSeCPFPodeVotar(voto)).thenReturn(Mono.just(voto));
 
         webTestClient.post().uri(ENDPOINT_URL.concat("/{idSessao}/votar"), "A")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(votoDTO), VotoDTO.class)
+                .body(Mono.just(voto), Voto.class)
                 .exchange()
                 .expectStatus().isCreated()
                 .expectHeader().contentType(MediaType.APPLICATION_JSON)
@@ -262,18 +263,18 @@ public class SessaoVotacaoControllerTest {
 
     @Test
     public void votar_badRequest_associadoJaVotou() {
-        VotoDTO votoDTO = new VotoDTO("26622817073", true);
-        Mockito.when(cpfService.verificarSeCPFPodeVotar(votoDTO)).thenReturn(Mono.just(votoDTO));
+        var voto = new Voto(null, "26622817073", true);
+        Mockito.when(cpfService.verificarSeCPFPodeVotar(voto)).thenReturn(Mono.just(voto));
 
         webTestClient.post().uri(ENDPOINT_URL.concat("/{idSessao}/votar"), "A")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(votoDTO), VotoDTO.class)
+                .body(Mono.just(voto), VotoDTO.class)
                 .exchange()
                 .expectStatus().isCreated();
 
         webTestClient.post().uri(ENDPOINT_URL.concat("/{idSessao}/votar"), "A")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(votoDTO), VotoDTO.class)
+                .body(Mono.just(voto), Voto.class)
                 .exchange()
                 .expectStatus().is4xxClientError()
                 .expectBody()
@@ -282,12 +283,12 @@ public class SessaoVotacaoControllerTest {
 
     @Test
     public void votar_badRequest_sessaoNaoIniciada() {
-        VotoDTO votoDTO = new VotoDTO("26622817073", true);
-        Mockito.when(cpfService.verificarSeCPFPodeVotar(votoDTO)).thenReturn(Mono.just(votoDTO));
+        var voto = new Voto(null, "26622817073", true);
+        Mockito.when(cpfService.verificarSeCPFPodeVotar(voto)).thenReturn(Mono.just(voto));
 
         webTestClient.post().uri(ENDPOINT_URL.concat("/{idSessao}/votar"), "B")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(votoDTO), VotoDTO.class)
+                .body(Mono.just(voto), Voto.class)
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectBody()
@@ -297,12 +298,12 @@ public class SessaoVotacaoControllerTest {
 
     @Test
     public void votar_badRequest_sessaoJaEncerrada() {
-        VotoDTO votoDTO = new VotoDTO("26622817073", true);
-        Mockito.when(cpfService.verificarSeCPFPodeVotar(votoDTO)).thenReturn(Mono.just(votoDTO));
+        var voto = new Voto(null, "26622817073", true);
+        Mockito.when(cpfService.verificarSeCPFPodeVotar(voto)).thenReturn(Mono.just(voto));
 
         webTestClient.post().uri(ENDPOINT_URL.concat("/{idSessao}/votar"), "C")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(votoDTO), VotoDTO.class)
+                .body(Mono.just(voto), Voto.class)
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectBody()
@@ -312,13 +313,13 @@ public class SessaoVotacaoControllerTest {
 
     @Test
     public void votar_badRequest_associadoSemPermissao() {
-        VotoDTO votoDTO = new VotoDTO("26622817073", true);
-        Mockito.when(cpfService.verificarSeCPFPodeVotar(votoDTO))
+        var voto = new Voto(null, "26622817073", true);
+        Mockito.when(cpfService.verificarSeCPFPodeVotar(voto))
                 .thenReturn(Mono.error(new AssociadoSemPermissaoParaVotarException()));
 
         webTestClient.post().uri(ENDPOINT_URL.concat("/{idSessao}/votar"), "A")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(Mono.just(votoDTO), VotoDTO.class)
+                .body(Mono.just(voto), Voto.class)
                 .exchange()
                 .expectStatus().isBadRequest()
                 .expectBody()

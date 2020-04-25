@@ -7,11 +7,6 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 
-/**
- * Representa o voto do associado numa sessão.
- *
- * @author rafael.rutsatz
- */
 @Document(collection = "votos")
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
@@ -26,9 +21,6 @@ public class Voto implements Serializable {
     @EqualsAndHashCode.Include
     private String id;
 
-    /**
-     * CPF do associado que realizou o voto.
-     */
     @NotNull
     private String cpfAssociado;
 
