@@ -13,6 +13,10 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 public class SessaoVotacaoDto {
 
+    @Schema(description = "ID da sessão de votação.",
+            example = "5ea086bc300c8a110e1de030")
+    private String id;
+
     /**
      * Usa o ID da pauta para poder recuperar a pauta do banco e fazer o vínculo entre a pauta e a sessão.
      */

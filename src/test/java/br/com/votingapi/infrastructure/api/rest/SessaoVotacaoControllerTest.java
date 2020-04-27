@@ -138,7 +138,7 @@ public class SessaoVotacaoControllerTest {
 
     @Test
     public void criarSessao() {
-        SessaoVotacaoDto sessao = new SessaoVotacaoDto("E", parse("2020-04-19T17:03:00"),
+        SessaoVotacaoDto sessao = new SessaoVotacaoDto(null, "E", parse("2020-04-19T17:03:00"),
                 parse("2020-04-19T17:03:00"));
 
         webTestClient.post().uri(ENDPOINT_URL)
@@ -154,7 +154,7 @@ public class SessaoVotacaoControllerTest {
 
     @Test
     public void criarSessaoSemInformarDatas() {
-        SessaoVotacaoDto sessaoVotacao = new SessaoVotacaoDto("E", null, null);
+        SessaoVotacaoDto sessaoVotacao = new SessaoVotacaoDto(null, "E", null, null);
         Flux<SessaoVotacaoDto> sessaoVotacaoFlux = webTestClient.post().uri(ENDPOINT_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(sessaoVotacao), SessaoVotacaoDto.class)
@@ -178,7 +178,7 @@ public class SessaoVotacaoControllerTest {
     public void criarSessaoSemInformarDataFim() {
         LocalDateTime dataInicio = parse("2020-04-19T17:03:00");
         LocalDateTime dataEsperada = dataInicio.plusMinutes(1);
-        SessaoVotacaoDto sessao = new SessaoVotacaoDto("E", dataInicio, null);
+        SessaoVotacaoDto sessao = new SessaoVotacaoDto(null, "E", dataInicio, null);
         Flux<SessaoVotacaoDto> sessaoVotacaoFlux = webTestClient.post().uri(ENDPOINT_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(sessao), SessaoVotacaoDto.class)
@@ -202,7 +202,7 @@ public class SessaoVotacaoControllerTest {
 
     @Test
     public void criarSessao_badRequest_sessaoJaCadastrada() {
-        SessaoVotacaoDto sessao = new SessaoVotacaoDto("A",
+        SessaoVotacaoDto sessao = new SessaoVotacaoDto(null, "A",
                 parse("2020-04-19T17:03:00"), parse("2020-04-19T17:03:00"));
         webTestClient.post().uri(ENDPOINT_URL)
                 .contentType(MediaType.APPLICATION_JSON)
@@ -216,7 +216,7 @@ public class SessaoVotacaoControllerTest {
 
     @Test
     public void criarSessao_badRequest_dataInicialMaiorQueFinal() {
-        SessaoVotacaoDto sessao = new SessaoVotacaoDto("E",
+        SessaoVotacaoDto sessao = new SessaoVotacaoDto(null, "E",
                 parse("2020-04-19T17:03:01"), parse("2020-04-19T17:03:00"));
         webTestClient.post().uri(ENDPOINT_URL)
                 .contentType(MediaType.APPLICATION_JSON)

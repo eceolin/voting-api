@@ -130,7 +130,7 @@ public class SessaoVotacaoServiceImpl implements SessaoVotacaoService {
     }
 
     private SessaoVotacao validarSessaoEncerrada(SessaoVotacao sessaoVotacao) {
-        if (sessaoVotacao.getDataInicio().isBefore(sessaoVotacao.getDataFim())) {
+        if (LocalDateTime.now().isBefore(sessaoVotacao.getDataFim())) {
             throw new SessaoVotacaoNaoEncerradaException();
         }
         return sessaoVotacao;

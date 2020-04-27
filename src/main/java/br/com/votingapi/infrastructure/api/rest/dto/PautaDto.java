@@ -12,6 +12,10 @@ import javax.validation.constraints.NotBlank;
 @AllArgsConstructor
 public class PautaDto {
 
+    @Schema(description = "ID da pauta que foi criada.",
+            example = "5ea1ee7c49d9501eec55c12f")
+    private String id;
+
     @NotBlank
     @Schema(description = "Assunto da pauta que será discutido na votação.",
             example = "Aprovar novo orçamento", required = true)

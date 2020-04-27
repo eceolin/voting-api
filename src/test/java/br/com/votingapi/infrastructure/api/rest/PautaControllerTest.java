@@ -66,7 +66,7 @@ public class PautaControllerTest {
 
     @Test
     public void criarPauta() {
-        PautaDto pautaDto = new PautaDto("Assunto 5");
+        PautaDto pautaDto = new PautaDto(null, "Assunto 5");
         webTestClient.post().uri(ENDPOINT_URL)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Mono.just(pautaDto), PautaDto.class)
