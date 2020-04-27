@@ -29,3 +29,12 @@ Para consultar os métodos disponíveis na API, acesse a documentação através
 
 [http://localhost:8080/swagger-ui.html](http://localhost:8080/swagger-ui.html)
 
+# Acesso API online
+
+Para acessar a API online, utilize o link abaixo:
+
+[http://test-voting-api.herokuapp.com/api/v1/](http://test-voting-api.herokuapp.com/api/v1/)
+
+A documentação online está disponível em:
+
+[http://test-voting-api.herokuapp.com/swagger-ui.html](http://test-voting-api.herokuapp.com/swagger-ui.html)
